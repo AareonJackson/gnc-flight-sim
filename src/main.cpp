@@ -4,7 +4,7 @@
 
 int main() {
     // Create a 800x600 window with a title
-    sf::RenderWindow window(sf::VideoMode({800, 600}), "FlightSimulator Simulator - Setup Test");
+    sf::RenderWindow window(sf::VideoMode({800, 600}), "Flight Simulator");
 
     Vehicle vehicle(10.0, 9.81);
 
@@ -12,7 +12,13 @@ int main() {
     vehicle.setThrust(hoverThrust);
     
     sf::Clock clock;
+    
+    const double fixedDeltaTimeSeconds = 0.02;
+    const double maxFrameTimeSeconds = 0.25;
+    
+    double accumulatorSeconds = 0.0;
     double printTimerSeconds = 0.0;
+    double simulationTimeSeconds = 0.0;
     
     // Main loop: runs as long as the window is open
     while (window.isOpen()) {
@@ -23,24 +29,34 @@ int main() {
             }
         }
 
-        const double deltaTimeSeconds = clock.restart().asSeconds();
+        double frameTimeSeconds = clock.restart().asSeconds();
+         if (frameTimeSeconds > maxFrameTimeSeconds) {
+             frameTimeSeconds = maxFrameTimeSeconds;
+         }
         
-        vehicle.update(deltaTimeSeconds);
+        accumulatorSeconds += frameTimeSeconds;
+        
+        while (accumulatorSeconds >= fixedDeltaTimeSeconds) {
+            vehicle.update(fixedDeltaTimeSeconds);
+            accumulatorSeconds -= fixedDeltaTimeSeconds;
+            simulationTimeSeconds += fixedDeltaTimeSeconds;
+            printTimerSeconds += fixedDeltaTimeSeconds;
+        
+        
+            if (printTimerSeconds >= 1.0) {
+                printTimerSeconds = 0.0;
 
-        printTimerSeconds += deltaTimeSeconds;
-        if (printTimerSeconds >= 1.0) {
-            printTimerSeconds = 0.0;
-
-            std::cout << "Altitude: " << vehicle.getAltitude() << " m | "
-                    << "Velocity: " << vehicle.getVelocity() << " m/s | "
-                    << "Acceleration: " << vehicle.getAcceleration() << " m/s^2 | "
-                    << "Thrust: " << vehicle.getThrust() << " N" << std::endl;
+                std::cout << "Sim Time: " << simulationTimeSeconds << " s | "
+                        << "Altitude: " << vehicle.getAltitude() << " m | "
+                        << "Velocity: " << vehicle.getVelocity() << " m/s | "
+                        << "Acceleration: " << vehicle.getAcceleration() << " m/s^2 | "
+                        << "Thrust: " << vehicle.getThrust() << " N" << std::endl;
+            }
         }
-
 
         window.clear(sf::Color(20, 20, 30));
         window.display();
     }
-    std::cout << "Simulation closed successfully" << std::endl;
+   
     return 0;
 }
