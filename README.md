@@ -20,7 +20,7 @@ The project enforces a strict separation of concerns, mimicking real-world fligh
 ## Dependencies
 * **C++17** (or higher)
 * **CMake** (3.10+)
-* **SFML** (2.5+) - Used strictly for the visual interface and hardware input.
+* **SFML** (3.0+) - Used strictly for the visual interface and hardware input.
 
 ## Build Instructions
 This project uses CMake for cross-platform compilation. To build the project, run the following commands:
