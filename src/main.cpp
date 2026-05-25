@@ -1,5 +1,7 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
+
+#include "pidcontroller.h"
 #include "vehicle.h"
 
 int main() {
@@ -14,9 +16,10 @@ int main() {
     sf::RenderWindow window(sf::VideoMode({windowWidth, windowHeight}), "Flight Simulator");
 
     Vehicle vehicle(10.0, 9.81);
+    PIDController altitudeController(15.0, 0.0, 8.0);
 
     const double hoverThrust = vehicle.getMass() * vehicle.getGravity();
-    vehicle.setThrust(hoverThrust);
+    vehicle.setThrust(hoverThrust * 1.2);
     
     sf::Clock clock;
     
@@ -55,6 +58,8 @@ int main() {
         accumulatorSeconds += frameTimeSeconds;
         
         while (accumulatorSeconds >= fixedDeltaTimeSeconds) {
+            const double pidOutput = altitudeController.update(targetAltitudeMeters, vehicle.getAltitude(), fixedDeltaTimeSeconds);
+
             vehicle.update(fixedDeltaTimeSeconds);
             accumulatorSeconds -= fixedDeltaTimeSeconds;
             simulationTimeSeconds += fixedDeltaTimeSeconds;

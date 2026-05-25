@@ -9,7 +9,9 @@ find_package(SFML 3 COMPONENTS Graphics Window System REQUIRED)
 
 add_executable(FlightSimulator src/main.cpp
         include/vehicle.h
-        src/vehicle.cpp)
+        src/vehicle.cpp
+        include/pidcontroller.h
+        src/pidcontroller.cpp)
 
 target_include_directories(FlightSimulator PRIVATE include)
 
