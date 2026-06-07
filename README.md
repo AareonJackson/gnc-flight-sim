@@ -1,4 +1,4 @@
-# 1D Flight Dynamics & GNC Simulator
+# Flight Dynamics & GNC Simulator
 
 ## Overview
 A real-time, physics-based simulation of a 1D vertical flight vehicle, built in C++. This project demonstrates foundational concepts in Guidance, Navigation, and Control (GNC) software, specifically focusing on deterministic execution and PID control laws.
@@ -38,6 +38,6 @@ This project uses CMake for cross-platform compilation. To build the project, ru
 * **[Spacebar]**: Inject Wind Gust (Apply sudden downward force)
 
 ## Future Roadmap
-* [ ] Implement 2D movement (pitch and lateral thrust).
+* [x] Implement 2D movement (pitch and lateral thrust).
 * [ ] Add a telemetry data logger to export flight data to `.csv`.
 * [ ] Introduce sensor noise to test the controller against imperfect data.
