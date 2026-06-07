@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include <SFML/Graphics.hpp>
 
 #include "pidcontroller.h"
@@ -10,16 +11,17 @@ int main() {
 
     constexpr float groundY = 620.0f;
     constexpr float pixelsPerMeter = 4.0f;
-    constexpr double targetAltitudeMeters = 100.0;
+    double targetAltitudeMeters = 100.0;
 
     // Create a 800x600 window with a title
     sf::RenderWindow window(sf::VideoMode({windowWidth, windowHeight}), "Flight Simulator");
 
     Vehicle vehicle(10.0, 9.81);
-    PIDController altitudeController(15.0, 0.0, 8.0);
+    PIDController altitudeController(10.0, 0.0, 10.0);
 
     const double hoverThrust = vehicle.getMass() * vehicle.getGravity();
-    vehicle.setThrust(hoverThrust * 1.2);
+    const double minimumThrust = 0.0;
+    const double maximumThrust = hoverThrust * 2.5;
     
     sf::Clock clock;
     
@@ -58,9 +60,13 @@ int main() {
         accumulatorSeconds += frameTimeSeconds;
         
         while (accumulatorSeconds >= fixedDeltaTimeSeconds) {
-            const double pidOutput = altitudeController.update(targetAltitudeMeters, vehicle.getAltitude(), fixedDeltaTimeSeconds);
+            const double pidCorrection = altitudeController.update(targetAltitudeMeters, vehicle.getAltitude(), fixedDeltaTimeSeconds);
+            const double unclampedThrust = hoverThrust + pidCorrection;
+            const double thrustCommand = std::clamp(unclampedThrust, minimumThrust, maximumThrust);
 
+            vehicle.setThrust(thrustCommand);
             vehicle.update(fixedDeltaTimeSeconds);
+
             accumulatorSeconds -= fixedDeltaTimeSeconds;
             simulationTimeSeconds += fixedDeltaTimeSeconds;
             printTimerSeconds += fixedDeltaTimeSeconds;
