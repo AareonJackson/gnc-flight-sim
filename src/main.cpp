@@ -16,8 +16,12 @@ int main() {
     // Create a 800x600 window with a title
     sf::RenderWindow window(sf::VideoMode({windowWidth, windowHeight}), "Flight Simulator");
 
+    double kp = 15.0;
+    double ki = 0.0;
+    double kd = 8.0;
+
     Vehicle vehicle(10.0, 9.81);
-    PIDController altitudeController(10.0, 0.0, 10.0);
+    PIDController altitudeController(kp, ki, kd);
 
     const double hoverThrust = vehicle.getMass() * vehicle.getGravity();
     const double minimumThrust = 0.0;
@@ -27,6 +31,11 @@ int main() {
     
     const double fixedDeltaTimeSeconds = 0.02;
     const double maxFrameTimeSeconds = 0.25;
+
+    const double targetAltitudeChangeRate = 25.0;
+    const double kpChangeRate = 5.0;
+    const double kiChangeRate = 0.2;
+    const double kdChangeRate = 5.0;
     
     double accumulatorSeconds = 0.0;
     double printTimerSeconds = 0.0;
@@ -50,13 +59,67 @@ int main() {
             if (event->is<sf::Event::Closed>()) {
                 window.close();
             }
+
+            if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
+                if (keyPressed->code == sf::Keyboard::Key::Space) {
+                    std::cout << "Wind gust input detected" << std::endl;
+                }
+                if (keyPressed->code == sf::Keyboard::Key::Up) {
+                    targetAltitudeMeters += 10.0;
+                    std::cout << "Target altitude increased: " << targetAltitudeMeters << " m" << std::endl;
+                }
+
+                if (keyPressed->code == sf::Keyboard::Key::Down) {
+                    targetAltitudeMeters -= 10.0;
+                    std::cout << "Target altitude decreased: " << targetAltitudeMeters << " m" << std::endl;
+                }
+
+                if (keyPressed->code == sf::Keyboard::Key::Q) {
+                    kp += 1.0;
+                    std::cout << "Kp increased: " << kp << std::endl;
+                }
+
+                if (keyPressed->code == sf::Keyboard::Key::A) {
+                    kp -= 1.0;
+                    std::cout << "Kp decreased: " << kp << std::endl;
+                }
+
+                if (keyPressed->code == sf::Keyboard::Key::W) {
+                    ki += 0.1;
+                    std::cout << "Ki increased: " << ki << std::endl;
+                }
+
+                if (keyPressed->code == sf::Keyboard::Key::S) {
+                    ki -= 0.1;
+                    std::cout << "Ki decreased: " << ki << std::endl;
+                }
+
+                if (keyPressed->code == sf::Keyboard::Key::E) {
+                    kd += 1.0;
+                    std::cout << "Kd increased: " << kd << std::endl;
+                }
+
+                if (keyPressed->code == sf::Keyboard::Key::D) {
+                    kd -= 1.0;
+                    std::cout << "Kd decreased: " << kd << std::endl;
+                }
+            }
         }
+
+
 
         double frameTimeSeconds = clock.restart().asSeconds();
          if (frameTimeSeconds > maxFrameTimeSeconds) {
              frameTimeSeconds = maxFrameTimeSeconds;
          }
-        
+
+        targetAltitudeMeters = std::max(0.0, targetAltitudeMeters);
+        kp = std::max(0.0, kp);
+        ki = std::max(0.0, ki);
+        kd = std::max(0.0, kd);
+
+        altitudeController.setGains(kp, ki, kd);
+
         accumulatorSeconds += frameTimeSeconds;
         
         while (accumulatorSeconds >= fixedDeltaTimeSeconds) {
@@ -76,10 +139,15 @@ int main() {
                 printTimerSeconds = 0.0;
 
                 std::cout << "Sim Time: " << simulationTimeSeconds << " s | "
+                        << "Target: " << targetAltitudeMeters << " m | "
                         << "Altitude: " << vehicle.getAltitude() << " m | "
                         << "Velocity: " << vehicle.getVelocity() << " m/s | "
                         << "Acceleration: " << vehicle.getAcceleration() << " m/s^2 | "
-                        << "Thrust: " << vehicle.getThrust() << " N" << std::endl;
+                        << "Thrust: " << vehicle.getThrust() << " N | "
+                        << "Kp:" << altitudeController.getKp()
+                        << " | Ki:" << altitudeController.getKi()
+                        << " | Kd:" << altitudeController.getKd()
+                        << std::endl;
             }
         }
 
