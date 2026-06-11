@@ -5,9 +5,11 @@
 #include "simulationwidget.h"
 #include <algorithm>
 #include <iostream>
+#include <QFont>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QString>
 
 
 SimulationWidget::SimulationWidget(QWidget* parent)
@@ -38,6 +40,11 @@ void SimulationWidget::paintEvent(QPaintEvent* event) {
 
     painter.fillRect(rect(), QColor(20, 20, 30));
 
+    drawWorld(painter);
+    drawTelemetry(painter);
+}
+
+void SimulationWidget::drawWorld(QPainter& painter) {
     const float vehicleScreenX = static_cast<float>(width()) * 0.5f;
     const float vehicleScreenY = groundY - static_cast<float>(vehicle.getAltitude()) * pixelsPerMeter;
     const float targetScreenY = groundY - static_cast<float>(targetAltitudeMeters) * pixelsPerMeter;
@@ -53,6 +60,48 @@ void SimulationWidget::paintEvent(QPaintEvent* event) {
     painter.setBrush(QColor(230, 230, 80));
     painter.drawEllipse(QPointF(vehicleScreenX, vehicleScreenY), 12.0, 12.0);
 }
+
+void SimulationWidget::drawTelemetry(QPainter& painter) {
+    painter.setPen(QColor(230, 230, 230));
+
+    QFont telemetryFont("Roboto");
+    telemetryFont.setStyleHint(QFont::SansSerif);
+    telemetryFont.setPointSize(12);
+    painter.setFont(telemetryFont);
+
+    const int footerHeight = 55;
+    const int footerX = 0;
+    const int footerY = height() - footerHeight;
+    const int footerWidth = width();
+
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(0, 0, 0, 170));
+    painter.drawRoundedRect(footerX, footerY, footerWidth, footerHeight, 8, 8);
+
+    painter.setPen(QColor(230, 230, 230));
+
+    const int leftPadding = 18;
+    const int firstRowY = footerY + 21;
+    const int secondRowY = footerY + 43;
+
+    const QString rowOne = QString("Time: %1 s    Target: %2 m    Altitude: %3 m    Velocity: %4 m/s    Accel: %5 m/s²")
+        .arg(simulationTimeSeconds, 0, 'f', 2)
+        .arg(targetAltitudeMeters, 0, 'f', 2)
+        .arg(vehicle.getAltitude(), 0, 'f', 2)
+        .arg(vehicle.getVelocity(), 0, 'f', 2)
+        .arg(vehicle.getAcceleration(), 0, 'f', 2);
+
+    const QString rowTwo = QString("Thrust: %1 N    Kp: %2    Ki: %3    Kd: %4    Physics dt: %5 s")
+        .arg(vehicle.getThrust(), 0, 'f', 2)
+        .arg(altitudeController.getKp(), 0, 'f', 2)
+        .arg(altitudeController.getKi(), 0, 'f', 3)
+        .arg(altitudeController.getKd(), 0, 'f', 2)
+        .arg(fixedDeltaTimeSeconds, 0, 'f', 3);
+
+    painter.drawText(leftPadding, firstRowY, rowOne);
+    painter.drawText(leftPadding, secondRowY, rowTwo);
+}
+
 
 void SimulationWidget::keyPressEvent(QKeyEvent* event) {
     if (event->key() == Qt::Key_Space) {

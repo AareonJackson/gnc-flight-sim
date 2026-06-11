@@ -38,6 +38,6 @@ This project uses CMake for cross-platform compilation. To build the project, ru
 * **[Spacebar]**: Inject Wind Gust (Apply sudden downward force)
 
 ## Future Roadmap
-* [x] Implement 2D movement (pitch and lateral thrust).
+* [ ] Implement 2D movement (pitch and lateral thrust).
 * [ ] Add a telemetry data logger to export flight data to `.csv`.
 * [ ] Introduce sensor noise to test the controller against imperfect data.

@@ -6,6 +6,8 @@
 #include "pidcontroller.h"
 #include "vehicle.h"
 
+class QPainter;
+
 class SimulationWidget : public QWidget {
 public:
     explicit SimulationWidget(QWidget* parent = nullptr);
@@ -16,6 +18,8 @@ protected:
 
 private:
     void updateFrame();
+    void drawWorld(QPainter& painter);
+    void drawTelemetry(QPainter& painter);
 
     static constexpr unsigned int windowWidth = 900;
     static constexpr unsigned int windowHeight = 700;
@@ -27,7 +31,7 @@ private:
 
     double kp = 15.0;
     double ki = 0.0;
-    double kd = 8.0;
+    double kd = 20.0;
 
     Vehicle vehicle;
     PIDController altitudeController;

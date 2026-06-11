@@ -1,5 +1,3 @@
-#include <iostream>
-#include <algorithm>
 #include <QApplication>
 #include "simulationwidget.h"
 
