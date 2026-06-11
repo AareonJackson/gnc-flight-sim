@@ -14,13 +14,13 @@ The software models vehicle kinematics and uses a custom PID controller to calcu
 ## Architecture
 The project enforces a strict separation of concerns, mimicking real-world flight software architecture:
 * **`Vehicle Model`:** Handles the physical state (mass, gravity, velocity, altitude). It knows nothing about how to fly; it only accepts thrust commands and updates its kinematics using Newtonian physics.
-* **`PID Controller`:** The "brain" of the system. It reads the vehicle's current altitude, compares it to the target, calculates the error, and outputs a thrust command.
-* **`Simulation Loop`:** The overarching engine that manages the fixed-timestep accumulator, queries the controller, updates the vehicle, and passes state data to the renderer.
+* **`PID Controller`:** The "brain" of the system. It reads the vehicle's current altitude, compares it to the target, calculates the error, and outputs a thrust correction.
+* **`Simulation Widget`:** The Qt based application layer that manages timing, keyboard input, rendering, and the fixed timestep simulation loop.
 
 ## Dependencies
 * **C++17** (or higher)
 * **CMake** (3.10+)
-* **SFML** (3.0+) - Used strictly for the visual interface and hardware input.
+* **QT 6 Widgets** - Used for the visual interface, rendering, timing, and hardware input.
 
 ## Build Instructions
 This project uses CMake for cross-platform compilation. To build the project, run the following commands:

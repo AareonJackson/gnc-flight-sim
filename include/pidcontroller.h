@@ -1,9 +1,4 @@
-//
-// Created by Aareon Jackson on 5/25/26.
-//
-
-#ifndef FLIGHTSIMULATOR_PIDCONTROLLER_H
-#define FLIGHTSIMULATOR_PIDCONTROLLER_H
+#pragma once
 
 class PIDController {
 public:
@@ -29,4 +24,4 @@ private:
 
 };
 
-#endif //FLIGHTSIMULATOR_PIDCONTROLLER_H
+
