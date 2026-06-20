@@ -39,6 +39,11 @@ private:
     double hoverThrust = 0.0;
     const double minimumThrust = 0.0;
     double maximumThrust = 0.0;
+    const double windGustForceNewtons = -250.0;
+    const double windGustDurationSeconds = 0.25;
+    double windGustTimeRemainingSeconds = 0.0;
+    bool windGustActive = false;
+
 
     QTimer frameTimer;
     QElapsedTimer frameClock;

@@ -91,12 +91,16 @@ void SimulationWidget::drawTelemetry(QPainter& painter) {
         .arg(vehicle.getVelocity(), 0, 'f', 2)
         .arg(vehicle.getAcceleration(), 0, 'f', 2);
 
-    const QString rowTwo = QString("Thrust: %1 N    Kp: %2    Ki: %3    Kd: %4    Physics dt: %5 s")
+    const QString rowTwo = QString("Thrust: %1 N    Kp: %2    Ki: %3    Kd: %4    Physics dt: %5 s  "
+                                   "    Disturbance Force: %6 N     Gust: %7        Gust Time Remaining: %8 s")
         .arg(vehicle.getThrust(), 0, 'f', 2)
         .arg(altitudeController.getKp(), 0, 'f', 2)
         .arg(altitudeController.getKi(), 0, 'f', 3)
         .arg(altitudeController.getKd(), 0, 'f', 2)
-        .arg(fixedDeltaTimeSeconds, 0, 'f', 3);
+        .arg(fixedDeltaTimeSeconds, 0, 'f', 3)
+        .arg(vehicle.getDisturbanceForce(), 0, 'f', 2)
+        .arg(windGustActive ? "ON" : "OFF")
+        .arg(windGustTimeRemainingSeconds, 0, 'f', 2);
 
     painter.drawText(leftPadding, firstRowY, rowOne);
     painter.drawText(leftPadding, secondRowY, rowTwo);
@@ -105,6 +109,8 @@ void SimulationWidget::drawTelemetry(QPainter& painter) {
 
 void SimulationWidget::keyPressEvent(QKeyEvent* event) {
     if (event->key() == Qt::Key_Space) {
+        windGustActive = true;
+        windGustTimeRemainingSeconds = windGustDurationSeconds;
         std::cout << "Wind gust input detected" << std::endl;
     }
 
@@ -175,6 +181,15 @@ void SimulationWidget::updateFrame() {
         const double unclampedThrust = hoverThrust + pidCorrection;
         const double thrustCommand = std::clamp(unclampedThrust, minimumThrust, maximumThrust);
 
+        if (windGustActive) {
+            if (windGustTimeRemainingSeconds > 0.0) {
+                windGustTimeRemainingSeconds -= fixedDeltaTimeSeconds;
+                vehicle.setDisturbanceForce(windGustForceNewtons);
+            } else {
+                windGustActive = false;
+                vehicle.setDisturbanceForce(0.0);
+            }
+        }
         vehicle.setThrust(thrustCommand);
         vehicle.update(fixedDeltaTimeSeconds);
 
@@ -194,6 +209,9 @@ void SimulationWidget::updateFrame() {
                       << "Kp:" << altitudeController.getKp()
                       << " | Ki:" << altitudeController.getKi()
                       << " | Kd:" << altitudeController.getKd()
+                      << " | Disturbance Forse: " << vehicle.getDisturbanceForce() << " N"
+                      << " | Gust: " << (windGustActive ? "ON" : "OFF");
+            std::cout << " | Gust Time Remaining: " << windGustTimeRemainingSeconds << " s"
                       << std::endl;
         }
     }
