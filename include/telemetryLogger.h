@@ -6,22 +6,26 @@
 
 class telemetryLogger {
 public:
+    TelemetryLogger();
+    ~TelementryLogger();
     bool start( const std::string& filePath);
     void stop();
     bool isLogging() const;
     void logSample(double timeSeconds,
                     double targetAltitude,
-                    double targetAltitude,
                     double altitude,
                     double velocity,
+                    double acceleration,
                     double thrust,
-                    double pGain,
-                    double iGain,
-                    double dGain);
+                    double disturbanceForce,
+                    double kp,
+                    double ki,
+                    double kd,
+                    bool windGustActive);
 
 private:
     std::ofstream file_;
-    bool logging_; false;
+    bool logging_;
 };
 
 

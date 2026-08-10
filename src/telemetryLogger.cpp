@@ -4,7 +4,17 @@
 #include <iomanip>
 
 
+TelemetryLogger::TelemetryLogger()
+    : logging_(false) {
+}
+
+TelemetryLogger::~TelemetryLogger() {
+    stop();
+}
+
 bool TelemetryLogger::start(const std::string& filePath) {
+    stop();
+
     file_.open(filePath);
 
     if (!file_.is_open()) {
@@ -13,7 +23,17 @@ bool TelemetryLogger::start(const std::string& filePath) {
     }
 
     logging_ = true;
-    file_ << "time_seconds, target_altitude,altitude,velocity,thrust,p_gain,i_gain,d_gain\n";
+    file_ << "timeSeconds,"
+         << "targetAltitude,"
+         << "altitude,"
+         << "velocity,"
+         << "acceleration,"
+         << "thrust,"
+         << "disturbanceForce,"
+         << "kp,"
+         << "ki,"
+         << "kd,"
+         << "windGustActive\n";
 
     return true;
 }
@@ -36,10 +56,13 @@ void TelemetryLogger::logSample(double timeSeconds,
                                 double targetAltitude,
                                 double altitude,
                                 double velocity,
+                                double acceleration,
                                 double thrust,
-                                double pGain,
-                                double iGain,
-                                double dGain) {
+                                double disturbanceForce,
+                                double kp,
+                                double ki,
+                                double kd,
+                                bool windGustActive) {
     if (!logging_ || !file_.is_open()) {
         return;
     }
@@ -50,7 +73,10 @@ void TelemetryLogger::logSample(double timeSeconds,
           << altitude << ','
           << velocity << ','
           << thrust << ','
-          << pGain << ','
-          << iGain << ','
-          << dGain << '\n';
+          << disturbanceForce << ','
+          << kp << ','
+          << ki << ','
+          << kd << ','
+          << (windGustActive ? 1 : 0)
+          << '\n';
 }
