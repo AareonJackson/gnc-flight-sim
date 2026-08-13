@@ -24,7 +24,7 @@ SimulationWidget::SimulationWidget(QWidget* parent)
     maximumThrust = hoverThrust * 2.5;
 
     if (telemetryLogger.start("telemetry.csv")) {
-        std::cout << "Telemetry logging started: telemtry.csv" << std::endl;
+        std::cout << "Telemetry logging started: telemetry.csv" << std::endl;
     } else {
         std::cout << "Warning: failed to start telemetry logging." << std::endl;
     }
@@ -70,7 +70,7 @@ void SimulationWidget::drawWorld(QPainter& painter) {
 void SimulationWidget::drawTelemetry(QPainter& painter) {
     painter.setPen(QColor(230, 230, 230));
 
-    QFont telemetryFont("Roboto");
+    QFont telemetryFont("Roboto-Regular");
     telemetryFont.setStyleHint(QFont::SansSerif);
     telemetryFont.setPointSize(12);
     painter.setFont(telemetryFont);
@@ -90,12 +90,13 @@ void SimulationWidget::drawTelemetry(QPainter& painter) {
     const int firstRowY = footerY + 21;
     const int secondRowY = footerY + 43;
 
-    const QString rowOne = QString("Time: %1 s    Target: %2 m    Altitude: %3 m    Velocity: %4 m/s    Accel: %5 m/s²")
+    const QString rowOne = QString("Time: %1 s    Target: %2 m    Altitude: %3 m    Velocity: %4 m/s    Accel: %5 m/s²    Logging: %6")
         .arg(simulationTimeSeconds, 0, 'f', 2)
         .arg(targetAltitudeMeters, 0, 'f', 2)
         .arg(vehicle.getAltitude(), 0, 'f', 2)
         .arg(vehicle.getVelocity(), 0, 'f', 2)
-        .arg(vehicle.getAcceleration(), 0, 'f', 2);
+        .arg(vehicle.getAcceleration(), 0, 'f', 2)
+        .arg(telemetryLogger.isLogging() ? "ON" : "OFF");
 
     const QString rowTwo = QString("Thrust: %1 N    Kp: %2    Ki: %3    Kd: %4    Physics dt: %5 s  "
                                    "    Disturbance Force: %6 N     Gust: %7        Gust Time Remaining: %8 s")
@@ -114,6 +115,10 @@ void SimulationWidget::drawTelemetry(QPainter& painter) {
 
 
 void SimulationWidget::keyPressEvent(QKeyEvent* event) {
+    if (event->key() == Qt::Key_L) {
+        toggleTelemetryLogging();
+    }
+
     if (event->key() == Qt::Key_Space) {
         windGustActive = true;
         windGustTimeRemainingSeconds = windGustDurationSeconds;
@@ -158,6 +163,20 @@ void SimulationWidget::keyPressEvent(QKeyEvent* event) {
     if (event->key() == Qt::Key_D) {
         kd -= 1.0;
         std::cout << "Kd decreased: " << kd << std::endl;
+    }
+}
+
+void SimulationWidget::toggleTelemetryLogging() {
+    if (telemetryLogger.isLogging()) {
+        telemetryLogger.stop();
+        std::cout << "Telemetry logging stopped" << std::endl;
+        return;
+    }
+
+    if (telemetryLogger.start("telemetry.csv")) {
+        std::cout << "Telemetry logging started: telemetry.csv" << std::endl;
+    } else {
+        std::cout << "Warning: failed to start telemetry logging." << std::endl;
     }
 }
 
@@ -230,9 +249,10 @@ void SimulationWidget::updateFrame() {
                       << " | Ki:" << altitudeController.getKi()
                       << " | Kd:" << altitudeController.getKd()
                       << " | Disturbance Force: " << vehicle.getDisturbanceForce() << " N"
-                      << " | Gust: " << (windGustActive ? "ON" : "OFF");
-            std::cout << " | Gust Time Remaining: " << windGustTimeRemainingSeconds << " s"
-                      << std::endl;
+                      << " | Logging: " << (telemetryLogger.isLogging() ? "ON" : "OFF")
+                      << " | Gust: " << (windGustActive ? "ON" : "OFF")
+                      << " | Gust Time Remaining: " << windGustTimeRemainingSeconds << " s"
+            << std::endl;
         }
     }
 

@@ -21,6 +21,7 @@ private:
     void updateFrame();
     void drawWorld(QPainter& painter);
     void drawTelemetry(QPainter& painter);
+    void toggleTelemetryLogging();
 
     static constexpr unsigned int windowWidth = 900;
     static constexpr unsigned int windowHeight = 700;
