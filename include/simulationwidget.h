@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <QWidget>
 #include "pidcontroller.h"
+#include "telemetryLogger.h"
 #include "vehicle.h"
 
 class QPainter;
@@ -35,6 +36,7 @@ private:
 
     Vehicle vehicle;
     PIDController altitudeController;
+    TelemetryLogger telemetryLogger;
 
     double hoverThrust = 0.0;
     const double minimumThrust = 0.0;

@@ -11,6 +11,8 @@ add_executable(FlightSimulator src/main.cpp
         include/vehicle.h
         src/vehicle.cpp
         include/pidcontroller.h
+        include/telemetryLogger.h
+        src/telemetryLogger.cpp
         src/pidcontroller.cpp
         include/simulationwidget.h
         src/simulationwidget.cpp

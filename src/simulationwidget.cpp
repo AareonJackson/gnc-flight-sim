@@ -23,6 +23,12 @@ SimulationWidget::SimulationWidget(QWidget* parent)
     hoverThrust = vehicle.getMass() * vehicle.getGravity();
     maximumThrust = hoverThrust * 2.5;
 
+    if (telemetryLogger.start("telemetry.csv")) {
+        std::cout << "Telemetry logging started: telemtry.csv" << std::endl;
+    } else {
+        std::cout << "Warning: failed to start telemetry logging." << std::endl;
+    }
+
     frameClock.start();
 
     connect(&frameTimer, &QTimer::timeout, this, [this]() {
@@ -197,6 +203,20 @@ void SimulationWidget::updateFrame() {
         simulationTimeSeconds += fixedDeltaTimeSeconds;
         printTimerSeconds += fixedDeltaTimeSeconds;
 
+        telemetryLogger.logSample(
+            simulationTimeSeconds,
+            targetAltitudeMeters,
+            vehicle.getAltitude(),
+            vehicle.getVelocity(),
+            vehicle.getAcceleration(),
+            vehicle.getThrust(),
+            vehicle.getDisturbanceForce(),
+            altitudeController.getKp(),
+            altitudeController.getKi(),
+            altitudeController.getKd(),
+            windGustActive
+        );
+
         if (printTimerSeconds >= 1.0) {
             printTimerSeconds = 0.0;
 
@@ -209,7 +229,7 @@ void SimulationWidget::updateFrame() {
                       << "Kp:" << altitudeController.getKp()
                       << " | Ki:" << altitudeController.getKi()
                       << " | Kd:" << altitudeController.getKd()
-                      << " | Disturbance Forse: " << vehicle.getDisturbanceForce() << " N"
+                      << " | Disturbance Force: " << vehicle.getDisturbanceForce() << " N"
                       << " | Gust: " << (windGustActive ? "ON" : "OFF");
             std::cout << " | Gust Time Remaining: " << windGustTimeRemainingSeconds << " s"
                       << std::endl;

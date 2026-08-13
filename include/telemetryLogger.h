@@ -4,10 +4,10 @@
 #include <fstream>
 
 
-class telemetryLogger {
+class TelemetryLogger {
 public:
     TelemetryLogger();
-    ~TelementryLogger();
+    ~TelemetryLogger();
     bool start( const std::string& filePath);
     void stop();
     bool isLogging() const;
