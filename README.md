@@ -36,8 +36,9 @@ This project uses CMake for cross-platform compilation. To build the project, ru
 * **[W / S]**: Increase/Decrease Integral (I) Gain
 * **[E / D]**: Increase/Decrease Derivative (D) Gain
 * **[Spacebar]**: Inject Wind Gust (Apply sudden downward force)
+* **[Z]**: Toggle Telemetry logging (CSV file)
 
 ## Future Roadmap
-* [ ] Implement 2D movement (pitch and lateral thrust).
-* [ ] Add a telemetry data logger to export flight data to `.csv`.
-* [ ] Introduce sensor noise to test the controller against imperfect data.
+* [ ] Implement 3D movement.
+* [x] Add a telemetry data logger to export flight data to `.csv`.
+* [x] Introduce sensor noise to test the controller against imperfect data.
