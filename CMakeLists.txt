@@ -16,6 +16,8 @@ add_executable(FlightSimulator src/main.cpp
         src/pidcontroller.cpp
         include/simulationwidget.h
         src/simulationwidget.cpp
+        include/vector3.h
+        src/vector3.cpp
 )
 
 target_include_directories(FlightSimulator PRIVATE include)

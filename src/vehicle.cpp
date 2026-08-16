@@ -3,32 +3,45 @@
 Vehicle::Vehicle(double massKg, double gravityMetersPerSecondSquared)
     : massKg(massKg),
       gravityMetersPerSecondSquared(gravityMetersPerSecondSquared),
-      altitudeMeters(0.0),
-      velocityMetersPerSecond(0.0),
-      accelerationMetersPerSecondSquared(0.0),
-      thrustNewtons(0.0),
-      disturbanceForceNewtons(0.0) {
+      positionMeters(),
+      velocityMetersPerSecond(),
+      accelerationMetersPerSecondSquared(),
+      forceNewtons(),
+      disturbanceForceNewtons(),
+      thrustNewtons(0.0) {
 }
 
 void Vehicle::setThrust(double thrustNewtons) {
     this->thrustNewtons = thrustNewtons;
+    forceNewtons.z = thrustNewtons;
 }
 
 void Vehicle::setDisturbanceForce(double disturbanceNewtons) {
-    this->disturbanceForceNewtons = disturbanceNewtons;
+    disturbanceForceNewtons.z = disturbanceNewtons;
+}
+
+void Vehicle::setForce(const Vector3& forceNewtons) {
+    this->forceNewtons = forceNewtons;
+    thrustNewtons = forceNewtons.z;
+}
+
+void Vehicle::setDisturbanceForce(const Vector3& disturbanceForceNewtons) {
+    this->disturbanceForceNewtons = disturbanceForceNewtons;
 }
 
 void Vehicle::update(double deltaTimeSeconds) {
-    const double weightForceNewtons = massKg * gravityMetersPerSecondSquared;
-    const double netForceNewtons = thrustNewtons - weightForceNewtons + disturbanceForceNewtons;
+    const Vector3 gravityForceNewtons(0.0, 0.0, -massKg * gravityMetersPerSecondSquared);
+    const Vector3 netForceNewtons = forceNewtons + disturbanceForceNewtons + gravityForceNewtons;
+
     accelerationMetersPerSecondSquared = netForceNewtons / massKg;
     velocityMetersPerSecond += accelerationMetersPerSecondSquared * deltaTimeSeconds;
-    altitudeMeters += velocityMetersPerSecond * deltaTimeSeconds;
+    positionMeters += velocityMetersPerSecond * deltaTimeSeconds;
 
-    if (altitudeMeters < 0.0) {
-        altitudeMeters = 0.0;
-        if (velocityMetersPerSecond < 0.0) {
-            velocityMetersPerSecond = 0.0;
+    if (positionMeters.z < 0.0) {
+        positionMeters.z = 0.0;
+
+        if (velocityMetersPerSecond.z < 0.0) {
+            velocityMetersPerSecond.z = 0.0;
         }
     }
 }
@@ -42,15 +55,15 @@ double Vehicle::getGravity() const {
 }
 
 double Vehicle::getAltitude() const {
-    return altitudeMeters;
+    return positionMeters.z;
 }
 
 double Vehicle::getVelocity() const {
-    return velocityMetersPerSecond;
+    return velocityMetersPerSecond.z;
 }
 
 double Vehicle::getAcceleration() const {
-    return accelerationMetersPerSecondSquared;
+    return accelerationMetersPerSecondSquared.z;
 }
 
 double Vehicle::getThrust() const {
@@ -58,6 +71,26 @@ double Vehicle::getThrust() const {
 }
 
 double Vehicle::getDisturbanceForce() const {
+    return disturbanceForceNewtons.z;
+}
+
+Vector3 Vehicle::getPosition() const {
+    return positionMeters;
+}
+
+Vector3 Vehicle::getVelocityVector() const {
+    return velocityMetersPerSecond;
+}
+
+Vector3 Vehicle::getAccelerationVector() const {
+    return accelerationMetersPerSecondSquared;
+}
+
+Vector3 Vehicle::getForce() const {
+    return forceNewtons;
+}
+
+Vector3 Vehicle::getDisturbanceForceVector() const {
     return disturbanceForceNewtons;
 }
 
