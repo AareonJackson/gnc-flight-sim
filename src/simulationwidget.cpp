@@ -128,22 +128,25 @@ void SimulationWidget::drawTelemetry(QPainter& painter) {
     const int firstRowY = footerY + 21;
     const int secondRowY = footerY + 43;
 
-    const QString rowOne = QString("Time: %1 s    Target: %2 m    Altitude: %3 m    Velocity: %4 m/s    Accel: %5 m/s²    Logging: %6")
+    const Vector3 position = vehicle.getPosition();
+    const Vector3 velocity = vehicle.getVelocityVector();
+
+    const QString rowOne = QString("Time: %1 s    Pos XYZ: [%2, %3, %4] m    Vel XYZ: [%5, %6, %7] m/s    Logging: %8")
         .arg(simulationTimeSeconds, 0, 'f', 2)
-        .arg(targetAltitudeMeters, 0, 'f', 2)
-        .arg(vehicle.getAltitude(), 0, 'f', 2)
-        .arg(vehicle.getVelocity(), 0, 'f', 2)
-        .arg(vehicle.getAcceleration(), 0, 'f', 2)
+        .arg(position.x, 0, 'f', 2)
+        .arg(position.y, 0, 'f', 2)
+        .arg(position.z, 0, 'f', 2)
+        .arg(velocity.x, 0, 'f', 2)
+        .arg(velocity.y, 0, 'f', 2)
+        .arg(velocity.z, 0, 'f', 2)
         .arg(telemetryLogger.isLogging() ? "ON" : "OFF");
 
-    const QString rowTwo = QString("Thrust: %1 N    Kp: %2    Ki: %3    Kd: %4    Physics dt: %5 s  "
-                                   "    Disturbance Force: %6 N     Gust: %7        Gust Time Remaining: %8 s")
+    const QString rowTwo = QString("Target Z: %1 m    Thrust: %2 N    Kp: %3    Ki: %4    Kd: %5    Gust: %6    Gust Time: %7 s")
+        .arg(targetAltitudeMeters, 0, 'f', 2)
         .arg(vehicle.getThrust(), 0, 'f', 2)
         .arg(altitudeController.getKp(), 0, 'f', 2)
         .arg(altitudeController.getKi(), 0, 'f', 3)
         .arg(altitudeController.getKd(), 0, 'f', 2)
-        .arg(fixedDeltaTimeSeconds, 0, 'f', 3)
-        .arg(vehicle.getDisturbanceForce(), 0, 'f', 2)
         .arg(windGustActive ? "ON" : "OFF")
         .arg(windGustTimeRemainingSeconds, 0, 'f', 2);
 
