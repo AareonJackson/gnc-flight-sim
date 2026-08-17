@@ -47,12 +47,16 @@ void SimulationWidget::paintEvent(QPaintEvent* event) {
     painter.fillRect(rect(), QColor(20, 20, 30));
 
     drawWorld(painter);
+    drawTopDownView(painter);
     drawTelemetry(painter);
 }
 
 void SimulationWidget::drawWorld(QPainter& painter) {
-    const float vehicleScreenX = static_cast<float>(width()) * 0.5f;
-    const float vehicleScreenY = groundY - static_cast<float>(vehicle.getAltitude()) * pixelsPerMeter;
+    const Vector3 position = vehicle.getPosition();
+
+    const float worldCenterX = static_cast<float>(width()) * 0.5f;
+    const float vehicleScreenX = worldCenterX + static_cast<float>(position.x) * pixelsPerMeter;
+    const float vehicleScreenY = groundY - static_cast<float>(position.z) * pixelsPerMeter;
     const float targetScreenY = groundY - static_cast<float>(targetAltitudeMeters) * pixelsPerMeter;
 
     painter.setPen(Qt::NoPen);
@@ -63,8 +67,42 @@ void SimulationWidget::drawWorld(QPainter& painter) {
     painter.setBrush(QColor(100, 220, 100));
     painter.drawRect(0, static_cast<int>(groundY), width(), 3);
 
+    painter.setPen(QColor(90, 90, 110));
+    painter.drawLine(static_cast<int>(worldCenterX), 0, static_cast<int>(worldCenterX), static_cast<int>(groundY));
+
+    painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(230, 230, 80));
     painter.drawEllipse(QPointF(vehicleScreenX, vehicleScreenY), 12.0, 12.0);
+}
+
+void SimulationWidget::drawTopDownView(QPainter &painter) {
+    const Vector3 position = vehicle.getPosition();
+
+    const int mapSize = 160;
+    const int mapMargin = 18;
+    const int mapX = width() - mapSize - mapMargin;
+    const int mapY = mapMargin;
+
+    const QPointF mapCenter(mapX + mapSize * 0.5, mapY + mapSize * 0.5);
+
+    const float topDownScale = 2.0f;
+    const float vehicleMapX = static_cast<float>(mapCenter.x()) + static_cast<float>(position.x) * topDownScale;
+    const float vehicleMapY = static_cast<float>(mapCenter.y()) - static_cast<float>(position.y) * topDownScale;
+
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(0, 0, 0, 150));
+    painter.drawRoundedRect(mapX, mapY, mapSize, mapSize, 8, 8);
+
+    painter.setPen(QColor(90, 90, 110));
+    painter.drawLine(mapX, static_cast<int>(mapCenter.y()), mapX + mapSize, static_cast<int>(mapCenter.y()));
+    painter.drawLine(static_cast<int>(mapCenter.x()), mapY, static_cast<int>(mapCenter.x()), mapY + mapSize);
+
+    painter.setPen(QColor(230, 230, 230));
+    painter.drawText(mapX + 10, mapY + 20, "Top View X/Y");
+
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(80, 180, 255));
+    painter.drawEllipse(QPointF(vehicleMapX, vehicleMapY), 6.0, 6.0);
 }
 
 void SimulationWidget::drawTelemetry(QPainter& painter) {

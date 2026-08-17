@@ -33,7 +33,7 @@ void Vehicle::update(double deltaTimeSeconds) {
     const Vector3 gravityForceNewtons(0.0, 0.0, -massKg * gravityMetersPerSecondSquared);
     const Vector3 netForceNewtons = forceNewtons + disturbanceForceNewtons + gravityForceNewtons;
 
-    accelerationMetersPerSecondSquared = netForceNewtons / massKg;
+    accelerationMetersPerSecondSquared = netForceNewtons * (1.0 / massKg);
     velocityMetersPerSecond += accelerationMetersPerSecondSquared * deltaTimeSeconds;
     positionMeters += velocityMetersPerSecond * deltaTimeSeconds;
 
