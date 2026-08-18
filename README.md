@@ -88,20 +88,20 @@ At the current stage, the gust acts as a force disturbance on the vertical axis.
 ---
 
 ## Controls
-- Up / Down     Target Z altitude
-- J / K         Target X left/right
-- U / O         Target Y forward/back
-- L             Toggle telemetry logging
-- Space         Vertical wind gust
-- Q / A         Vertical Kp up/down
-- W / S         Vertical Ki up/down
-- E / D         Vertical Kd up/down
+- `[Up / Down]`     Target Z altitude
+- `[J / K]`         Target X left/right
+- `[U / O]`         Target Y forward/back
+- `[L]`             Toggle telemetry logging
+- `[Space]`         Vertical wind gust
+- `[Q / A]`         Vertical Kp up/down
+- `[W / S]`         Vertical Ki up/down
+- `[E / D]`         Vertical Kd up/down
 
 Future autonomous controls will include:
-- T Autonomous takeoff
-- H Hold current position
-- M Start waypoint mission
-- R Reset simulation
+- `[T]` Autonomous takeoff
+- `[H]` Hold current position
+- `[M]` Start waypoint mission
+- `[R]` Reset simulation
 
 ---
 ## Architecture
