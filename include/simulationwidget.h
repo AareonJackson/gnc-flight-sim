@@ -30,19 +30,27 @@ private:
     static constexpr float groundY = 620.0f;
     static constexpr float pixelsPerMeter = 4.0f;
 
-    double targetAltitudeMeters = 100.0;
+    Vector3 targetPositionMeters = Vector3(0.0, 0.0, 100.0);
 
-    double kp = 15.0;
-    double ki = 0.0;
-    double kd = 20.0;
+
+    double horizontalKp = 2.0;
+    double horizontalKi = 0.0;
+    double horizontalKd = 4.0;
+
+    double verticalKp = 15.0;
+    double verticalKi = 0.0;
+    double verticalKd = 20.0;
 
     Vehicle vehicle;
-    PIDController altitudeController;
+    PIDController xPositionController;
+    PIDController yPositionController;
+    PIDController zPositionController;
     TelemetryLogger telemetryLogger;
 
     double hoverThrust = 0.0;
     const double minimumThrust = 0.0;
     double maximumThrust = 0.0;
+    const double maximumHorizontalForce = 60.0;
     const double windGustForceNewtons = -250.0;
     const double windGustDurationSeconds = 0.25;
     double windGustTimeRemainingSeconds = 0.0;
