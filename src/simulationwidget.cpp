@@ -15,7 +15,9 @@
 SimulationWidget::SimulationWidget(QWidget* parent)
     : QWidget(parent),
       vehicle(10.0, 9.81),
-      altitudeController(kp, ki, kd) {
+      xPositionController(horizontalKp, horizontalKi, horizontalKd),
+      yPositionController(horizontalKp, horizontalKi, horizontalKd),
+      zPositionController(verticalKp, verticalKi, verticalKd) {
     setWindowTitle("Flight Simulator");
     resize(static_cast<int>(windowWidth), static_cast<int>(windowHeight));
     setFocusPolicy(Qt::StrongFocus);
@@ -57,7 +59,7 @@ void SimulationWidget::drawWorld(QPainter& painter) {
     const float worldCenterX = static_cast<float>(width()) * 0.5f;
     const float vehicleScreenX = worldCenterX + static_cast<float>(position.x) * pixelsPerMeter;
     const float vehicleScreenY = groundY - static_cast<float>(position.z) * pixelsPerMeter;
-    const float targetScreenY = groundY - static_cast<float>(targetAltitudeMeters) * pixelsPerMeter;
+    const float targetScreenY = groundY - static_cast<float>(targetPositionMeters.z) * pixelsPerMeter;
 
     painter.setPen(Qt::NoPen);
 
@@ -88,6 +90,8 @@ void SimulationWidget::drawTopDownView(QPainter &painter) {
     const float topDownScale = 2.0f;
     const float vehicleMapX = static_cast<float>(mapCenter.x()) + static_cast<float>(position.x) * topDownScale;
     const float vehicleMapY = static_cast<float>(mapCenter.y()) - static_cast<float>(position.y) * topDownScale;
+    const float targetMapX = static_cast<float>(mapCenter.x()) + static_cast<float>(targetPositionMeters.x) * topDownScale;
+    const float targetMapY = static_cast<float>(mapCenter.y()) - static_cast<float>(targetPositionMeters.y) * topDownScale;
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(0, 0, 0, 150));
@@ -101,8 +105,11 @@ void SimulationWidget::drawTopDownView(QPainter &painter) {
     painter.drawText(mapX + 10, mapY + 20, "Top View X/Y");
 
     painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(220, 80, 80));
+    painter.drawEllipse(QPointF(vehicleMapX, vehicleMapY), 5.0, 5.0);
+
     painter.setBrush(QColor(80, 180, 255));
-    painter.drawEllipse(QPointF(vehicleMapX, vehicleMapY), 6.0, 6.0);
+    painter.drawEllipse(QPointF(targetMapX, targetMapY), 6.0, 6.0);
 }
 
 void SimulationWidget::drawTelemetry(QPainter& painter) {
@@ -131,24 +138,28 @@ void SimulationWidget::drawTelemetry(QPainter& painter) {
     const Vector3 position = vehicle.getPosition();
     const Vector3 velocity = vehicle.getVelocityVector();
 
-    const QString rowOne = QString("Time: %1 s    Pos XYZ: [%2, %3, %4] m    Vel XYZ: [%5, %6, %7] m/s    Logging: %8")
+    const QString rowOne = QString("Time: %1 s    Pos XYZ: [%2, %3, %4] m    Target XYZ: [%5, %6, %7] m/s    Logging: %8")
         .arg(simulationTimeSeconds, 0, 'f', 2)
         .arg(position.x, 0, 'f', 2)
         .arg(position.y, 0, 'f', 2)
         .arg(position.z, 0, 'f', 2)
+        .arg(targetPositionMeters.x, 0, 'f', 2)
+        .arg(targetPositionMeters.y, 0, 'f', 2)
+        .arg(targetPositionMeters.z, 0, 'f', 2)
+        .arg(telemetryLogger.isLogging() ? "ON" : "OFF");
+
+    const QString rowTwo = QString("Vel XYZ: [%1, %2, %3] m/s    Force Z: %4 N    H-Gains: [%5, %6, %7]    V-Gains: [%8, %9, %10]    Gust: %11")
         .arg(velocity.x, 0, 'f', 2)
         .arg(velocity.y, 0, 'f', 2)
         .arg(velocity.z, 0, 'f', 2)
-        .arg(telemetryLogger.isLogging() ? "ON" : "OFF");
-
-    const QString rowTwo = QString("Target Z: %1 m    Thrust: %2 N    Kp: %3    Ki: %4    Kd: %5    Gust: %6    Gust Time: %7 s")
-        .arg(targetAltitudeMeters, 0, 'f', 2)
         .arg(vehicle.getThrust(), 0, 'f', 2)
-        .arg(altitudeController.getKp(), 0, 'f', 2)
-        .arg(altitudeController.getKi(), 0, 'f', 3)
-        .arg(altitudeController.getKd(), 0, 'f', 2)
-        .arg(windGustActive ? "ON" : "OFF")
-        .arg(windGustTimeRemainingSeconds, 0, 'f', 2);
+        .arg(xPositionController.getKp(), 0, 'f', 2)
+        .arg(xPositionController.getKi(), 0, 'f', 3)
+        .arg(xPositionController.getKd(), 0, 'f', 2)
+        .arg(zPositionController.getKp(), 0, 'f', 2)
+        .arg(zPositionController.getKi(), 0, 'f', 3)
+        .arg(zPositionController.getKd(), 0, 'f', 2)
+        .arg(windGustActive ? "ON" : "OFF");
 
     painter.drawText(leftPadding, firstRowY, rowOne);
     painter.drawText(leftPadding, secondRowY, rowTwo);
@@ -167,43 +178,63 @@ void SimulationWidget::keyPressEvent(QKeyEvent* event) {
     }
 
     if (event->key() == Qt::Key_Up) {
-        targetAltitudeMeters += 10.0;
-        std::cout << "Target altitude increased: " << targetAltitudeMeters << " m" << std::endl;
+        targetPositionMeters.z += 10.0;
+        std::cout << "Target Z increased: " << targetPositionMeters.z << " m" << std::endl;
     }
 
     if (event->key() == Qt::Key_Down) {
-        targetAltitudeMeters -= 10.0;
-        std::cout << "Target altitude decreased: " << targetAltitudeMeters << " m" << std::endl;
+        targetPositionMeters.z -= 10.0;
+        std::cout << "Target Z decreased: " << targetPositionMeters.z << " m" << std::endl;
+    }
+
+    if (event->key() == Qt::Key_J) {
+        targetPositionMeters.x -= 5.0;
+        std::cout << "Target X decreased: " << targetPositionMeters.x <<  " m" << std::endl;
+    }
+
+    if (event->key() == Qt::Key_K) {
+        targetPositionMeters.x += 5.0;
+        std::cout << "Target X increased: " << targetPositionMeters.x << " m" << std::endl;
+    }
+
+    if (event->key() == Qt::Key_U) {
+        targetPositionMeters.y += 5.0;
+        std::cout << "Target Y increased: " << targetPositionMeters.y <<  " m" << std::endl;
+    }
+
+    if (event->key() == Qt::Key_O) {
+        targetPositionMeters.y -= 5.0;
+        std::cout << "Target Y decreased: " << targetPositionMeters.y <<  " m" << std::endl;
     }
 
     if (event->key() == Qt::Key_Q) {
-        kp += 1.0;
-        std::cout << "Kp increased: " << kp << std::endl;
+        verticalKp += 1.0;
+        std::cout << "Vertical Kp increased: " << verticalKp << std::endl;
     }
 
     if (event->key() == Qt::Key_A) {
-        kp -= 1.0;
-        std::cout << "Kp decreased: " << kp << std::endl;
+        verticalKp -= 1.0;
+        std::cout << "Vertical Kp decreased: " << verticalKp << std::endl;
     }
 
     if (event->key() == Qt::Key_W) {
-        ki += 0.1;
-        std::cout << "Ki increased: " << ki << std::endl;
+        verticalKi += 0.1;
+        std::cout << "Vertical Ki increased: " << verticalKi << std::endl;
     }
 
     if (event->key() == Qt::Key_S) {
-        ki -= 0.1;
-        std::cout << "Ki decreased: " << ki << std::endl;
+        verticalKi -= 0.1;
+        std::cout << "Vertical Ki decreased: " << verticalKi << std::endl;
     }
 
     if (event->key() == Qt::Key_E) {
-        kd += 1.0;
-        std::cout << "Kd increased: " << kd << std::endl;
+        verticalKd += 0.1;
+        std::cout << "Vertical Kd increased: " << verticalKd << std::endl;
     }
 
     if (event->key() == Qt::Key_D) {
-        kd -= 1.0;
-        std::cout << "Kd decreased: " << kd << std::endl;
+        verticalKd -= 0.1;
+        std::cout << "Vertical Kd decreased: " << verticalKd << std::endl;
     }
 }
 
@@ -228,35 +259,57 @@ void SimulationWidget::updateFrame() {
         frameTimeSeconds = maxFrameTimeSeconds;
     }
 
-    targetAltitudeMeters = std::max(0.0, targetAltitudeMeters);
-    kp = std::max(0.0, kp);
-    ki = std::max(0.0, ki);
-    kd = std::max(0.0, kd);
+    targetPositionMeters.z = std::max(0.0, targetPositionMeters.z);
 
-    altitudeController.setGains(kp, ki, kd);
+    horizontalKp = std::max(0.0, horizontalKp);
+    horizontalKi = std::max(0.0, horizontalKi);
+    horizontalKd = std::max(0.0, horizontalKd);
+
+    verticalKp = std::max(0.0, verticalKp);
+    verticalKi = std::max(0.0, verticalKi);
+    verticalKd = std::max(0.0, verticalKd);
+
+    xPositionController.setGains(horizontalKp, horizontalKi, horizontalKd);
+    yPositionController.setGains(horizontalKp, horizontalKi, horizontalKd);
+    zPositionController.setGains(verticalKp, verticalKi, verticalKd);
 
     accumulatorSeconds += frameTimeSeconds;
 
     while (accumulatorSeconds >= fixedDeltaTimeSeconds) {
-        const double pidCorrection = altitudeController.update(
-            targetAltitudeMeters,
-            vehicle.getAltitude(),
+        const Vector3 position = vehicle.getPosition();
+
+        const double forceX = std::clamp(
+            xPositionController.update(targetPositionMeters.x, position.x, fixedDeltaTimeSeconds),
+            -maximumHorizontalForce,
+            maximumHorizontalForce
+        );
+
+        const double forceY = std::clamp(
+            yPositionController.update(targetPositionMeters.y, position.y, fixedDeltaTimeSeconds),
+            -maximumHorizontalForce,
+            maximumHorizontalForce
+        );
+
+        const double verticalCorrection = zPositionController.update(
+            targetPositionMeters.z,
+            position.z,
             fixedDeltaTimeSeconds
         );
 
-        const double unclampedThrust = hoverThrust + pidCorrection;
+        const double unclampedThrust = hoverThrust + verticalCorrection;
         const double thrustCommand = std::clamp(unclampedThrust, minimumThrust, maximumThrust);
 
         if (windGustActive) {
             if (windGustTimeRemainingSeconds > 0.0) {
                 windGustTimeRemainingSeconds -= fixedDeltaTimeSeconds;
-                vehicle.setDisturbanceForce(windGustForceNewtons);
+                vehicle.setDisturbanceForce(Vector3(0.0, 0.0, windGustForceNewtons));
             } else {
                 windGustActive = false;
-                vehicle.setDisturbanceForce(0.0);
+                vehicle.setDisturbanceForce(Vector3(0.0, 0.0, 0.0));
             }
         }
-        vehicle.setThrust(thrustCommand);
+
+        vehicle.setForce(Vector3(forceX, forceY, thrustCommand));
         vehicle.update(fixedDeltaTimeSeconds);
 
         accumulatorSeconds -= fixedDeltaTimeSeconds;
@@ -265,32 +318,38 @@ void SimulationWidget::updateFrame() {
 
         telemetryLogger.logSample(
             simulationTimeSeconds,
-            targetAltitudeMeters,
+            targetPositionMeters.z,
             vehicle.getAltitude(),
             vehicle.getVelocity(),
             vehicle.getAcceleration(),
             vehicle.getThrust(),
             vehicle.getDisturbanceForce(),
-            altitudeController.getKp(),
-            altitudeController.getKi(),
-            altitudeController.getKd(),
+            zPositionController.getKp(),
+            zPositionController.getKi(),
+            zPositionController.getKd(),
             windGustActive
         );
 
         if (printTimerSeconds >= 1.0) {
             printTimerSeconds = 0.0;
 
+            const Vector3 updatedPosition = vehicle.getPosition();
+            const Vector3 updatedVelocity = vehicle.getVelocityVector();
+
             std::cout << "Sim Time: " << simulationTimeSeconds << " s | "
-                      << "Target: " << targetAltitudeMeters << " m | "
-                      << "Altitude: " << vehicle.getAltitude() << " m | "
-                      << "Velocity: " << vehicle.getVelocity() << " m/s | "
-                      << "Acceleration: " << vehicle.getAcceleration() << " m/s^2 | "
-                      << "Thrust: " << vehicle.getThrust() << " N | "
-                      << "Kp:" << altitudeController.getKp()
-                      << " | Ki:" << altitudeController.getKi()
-                      << " | Kd:" << altitudeController.getKd()
-                      << " | Disturbance Force: " << vehicle.getDisturbanceForce() << " N"
-                      << " | Logging: " << (telemetryLogger.isLogging() ? "ON" : "OFF")
+                      << "Target XYZ: [" << targetPositionMeters.x << ", "
+                      << targetPositionMeters.y << ", "
+                      << targetPositionMeters.z << "] m | "
+                      << "Position XYZ: [" << updatedPosition.x << ", "
+                      << updatedPosition.y << ", "
+                      << updatedPosition.z << "] m | "
+                      << "Velocity XYZ: [" << updatedVelocity.x << ", "
+                      << updatedVelocity.y << ", "
+                      << updatedVelocity.z << "] m/s | "
+                      << "Force XYZ: [" << forceX << ", "
+                      << forceY << ", "
+                      << thrustCommand << "] N | "
+                      << "Logging: " << (telemetryLogger.isLogging() ? "ON" : "OFF")
                       << " | Gust: " << (windGustActive ? "ON" : "OFF")
                       << " | Gust Time Remaining: " << windGustTimeRemainingSeconds << " s"
             << std::endl;
